@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <title>Clipboard Saver</title>
+  <link rel="stylesheet" href="../src/styles.css">
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h2>
+    <img src="../assets/icon48.png" alt="icon" width="20px">
+     Clipboard Saver</h2>
+  <input type="text" id="searchBox" placeholder="🔍 Search...">
+  <div id="clipboardContainer"></div>
+  <div class="button-bar">
+    <button type="button" id="clearClipboard">Clear</button>
+    <select id="downloadFormat" aria-label="Select download format">
+      <option value="txt" selected>Download as TXT</option>
+      <option value="csv">Download as CSV</option>
+    </select>
+    <button type="button" id="exportClipboard">Download</button>
+    <div class="note">
+      ⚠️ Don't forget to download your clipboard history before closing the browser as your data won't be saved.
+    </div>
+  </div>
+  <script src="../src/popup.js"></script>
+</body>
