@@ -1,7 +1,7 @@
 /**
- * Listens for the 'copy' event and stores the copied text in Chrome's local storage
- * if it hasn't been stored already. Each entry includes the text, the domain it was
- * copied from, and a color associated with that domain.
+ * Listens for the 'copy' event and stores each copied selection as a clipboard
+ * history item in Chrome's local storage. Each entry includes the text, source
+ * domain, source URL, timestamp, and a color associated with that domain.
  *
  * @param {ClipboardEvent} e - The copy event.
  * @sideEffects Updates the 'clipboard' array in Chrome local storage.
@@ -11,21 +11,32 @@ document.addEventListener('copy', async (e) => {
     const text = window.getSelection().toString().trim();
     if (!text) return;
 
+    const runtime = globalThis.chrome && chrome.runtime;
+    if (!runtime || typeof runtime.sendMessage !== 'function') {
+      return;
+    }
+
     const domain = new URL(window.location.href).hostname;
+    const sourceUrl = window.location.href;
+    const copiedAt = new Date().toISOString();
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `clip-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-    chrome.storage.local.get({ clipboard: [] }, (result) => {
-      const clipboard = result.clipboard || [];
-
-      const alreadyExists = clipboard.some(
-        (item) => item.text === text
-      );
-
-      if (alreadyExists) return;
-
-      const color = getDomainColor(domain);
-
-      clipboard.push({ text, domain, color });
-      chrome.storage.local.set({ clipboard });
+    runtime.sendMessage({
+      type: 'SAVE_CLIPBOARD_ENTRY',
+      entry: {
+        id,
+        text,
+        domain,
+        sourceUrl,
+        color: getDomainColor(domain),
+        copiedAt,
+      },
+    }, () => {
+      if (chrome.runtime && chrome.runtime.lastError) {
+        console.warn('Clipboard capture failed:', chrome.runtime.lastError.message);
+      }
     });
   } catch (err) {
     console.error("Clipboard capture failed", err);
@@ -54,4 +65,18 @@ function getDomainColor(domain) {
 
   const index = Math.abs(hash) % colors.length;
   return colors[index];
+}
+
+function getRetentionRule(ruleKey) {
+  switch (ruleKey) {
+    case 'days-7':
+      return { maxAgeDays: 7 };
+    case 'days-30':
+      return { maxAgeDays: 30 };
+    case 'days-90':
+      return { maxAgeDays: 90 };
+    case 'all':
+    default:
+      return {};
+  }
 }

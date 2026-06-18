@@ -3,7 +3,7 @@
   "name": "Clipboard Saver - Effortless Ctrl+C grabber",
   "version": "1.0",
   "description": "Quickly save any copied text with Ctrl+C and download your browsing clipboard history in TXT or CSV.",
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "windows"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js"
@@ -27,5 +27,14 @@
       "js": ["src/content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open Clipboard Saver"
+    }
+  }
 }

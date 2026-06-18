@@ -1,26 +1,181 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clipboard Saver</title>
+  <style>
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    html,
+    body {
+      min-width: 420px;
+      margin: 0;
+    }
+  </style>
   <link rel="stylesheet" href="../src/styles.css">
-  <meta charset="UTF-8">
 </head>
 <body>
-  <h2>
-    <img src="../assets/icon48.png" alt="icon" width="20px">
-     Clipboard Saver</h2>
-  <input type="text" id="searchBox" placeholder="🔍 Search...">
-  <div id="clipboardContainer"></div>
-  <div class="button-bar">
-    <button type="button" id="clearClipboard">Clear</button>
-    <select id="downloadFormat" aria-label="Select download format">
-      <option value="txt" selected>Download as TXT</option>
-      <option value="csv">Download as CSV</option>
-    </select>
-    <button type="button" id="exportClipboard">Download</button>
-    <div class="note">
-      ⚠️ Don't forget to download your clipboard history before closing the browser as your data won't be saved.
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="../assets/icon48.png" alt="Clipboard Saver">
+        </div>
+        <div class="brand-copy">
+          <h1>Clipboard Saver</h1>
+          <p>Saved locally</p>
+        </div>
+      </div>
+      <button type="button" id="openSettings" class="icon-button" aria-label="Open settings">
+        <span aria-hidden="true">⚙️</span>
+      </button>
+    </header>
+
+    <label class="search-shell" for="searchBox">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.8-3.8"></path>
+      </svg>
+      <input type="text" id="searchBox" placeholder="Search..." autocomplete="off" spellcheck="false">
+    </label>
+
+    <section class="control-panel" aria-label="Clipboard controls">
+      <div class="control-row control-row-single">
+        <label class="control-field">
+          <span>Domain</span>
+          <select id="domainFilter" aria-label="Filter by domain"></select>
+        </label>
+      </div>
+
+      <div class="control-row">
+        <label class="control-field">
+          <span>Sort</span>
+          <select id="sortOrder" aria-label="Sort clipboard history">
+            <option value="newest" selected>Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="domain-asc">Domain A-Z</option>
+            <option value="domain-desc">Domain Z-A</option>
+          </select>
+        </label>
+        <button type="button" id="toggleBulkMode" class="toolbar-button toolbar-button-ghost toolbar-button-small bulk-select">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6v6H4V6Zm10 0h6v6h-6V6ZM4 16h6v2H4v-2Zm10 0h6v2h-6v-2Z"></path></svg>
+          <span>Bulk select</span>
+        </button>
+      </div>
+    </section>
+
+    <p class="status-note" id="statusNote" aria-live="polite"></p>
+
+    <div id="bulkToolbar" class="bulk-toolbar" hidden>
+      <span id="selectionCount" class="bulk-summary">0 selected</span>
+      <div class="bulk-toolbar-actions">
+        <button type="button" id="selectVisible" class="toolbar-button toolbar-button-small">
+          <span>Select visible</span>
+        </button>
+        <button type="button" id="copySelected" class="toolbar-button toolbar-button-small">
+          <span>Copy selected</span>
+        </button>
+        <button type="button" id="deleteSelected" class="toolbar-button toolbar-button-small toolbar-button-danger">
+          <span>Delete selected</span>
+        </button>
+        <button type="button" id="clearSelection" class="toolbar-button toolbar-button-small toolbar-button-ghost">
+          <span>Done</span>
+        </button>
+      </div>
     </div>
-  </div>
+
+    <div id="clipboardContainer" class="clipboard-container"></div>
+
+    <section class="export-section" aria-label="Export clipboard">
+      <h2>Export</h2>
+      <div class="export-row">
+        <select id="downloadFormat" aria-label="Select download format">
+          <option value="txt" selected>TXT</option>
+          <option value="csv">CSV</option>
+        </select>
+        <button type="button" id="exportClipboard" class="toolbar-button toolbar-button-primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4h14v-4"></path></svg>
+          <span>Export</span>
+        </button>
+        <button type="button" id="clearClipboard" class="toolbar-button toolbar-button-secondary">
+          <span aria-hidden="true" class="emoji-icon">🗑️</span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="settingsPanel" class="settings-panel" hidden aria-label="Settings panel">
+      <div class="settings-panel-header">
+        <div>
+          <h2>Settings</h2>
+          <p>Control retention and cleanup without cluttering the main popup.</p>
+        </div>
+        <button type="button" id="closeSettings" class="icon-button icon-button-secondary" aria-label="Close settings">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <p class="privacy-note">
+        ⚠️ Your data always stays locally on your machine and never leaves this browser.
+      </p>
+
+      <section class="shortcuts-section" aria-label="Keyboard shortcuts">
+        <div class="shortcuts-section-header">
+          <h3>Shortcuts</h3>
+          <p>Quick keys for search, popup access, and bulk mode.</p>
+        </div>
+        <table class="shortcuts-table">
+          <tbody>
+            <tr>
+              <th scope="row">Search</th>
+              <td><kbd>/</kbd></td>
+              <td><kbd>Ctrl</kbd> + <kbd>K</kbd></td>
+            </tr>
+            <tr>
+              <th scope="row">Open popup</th>
+              <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd></td>
+              <td>Global</td>
+            </tr>
+            <tr>
+              <th scope="row">Bulk select</th>
+              <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd></td>
+              <td>Toggle bulk mode</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <label class="control-field settings-field">
+        <span>Theme</span>
+        <select id="themeMode" aria-label="Theme mode">
+          <option value="light" selected>Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+
+      <div class="settings-row settings-action-row">
+        <label class="control-field settings-field settings-retention">
+          <span>Auto-Cleanup (Retention)</span>
+          <select id="retentionRule" aria-label="Retention rule">
+            <option value="all" selected>Keep all</option>
+            <option value="days-7">Keep 7 days</option>
+            <option value="days-30">Keep 30 days</option>
+            <option value="days-90">Keep 90 days</option>
+          </select>
+        </label>
+
+        <button type="button" id="cleanupNow" class="toolbar-button toolbar-button-secondary toolbar-button-small settings-cleanup">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 2v4h6v2h-2v14H4V8H2V6h6V2h8zm-2 2h-4v2h4V4zm0 4H6v12h12V8h-4zm-5 2h2v8H9v-8zm6 0h-2v8h2v-8z"></path></svg>
+          <span>Clean now</span>
+        </button>
+      </div>
+
+    </section>
+  </main>
   <script src="../src/popup.js"></script>
 </body>
+</html>
