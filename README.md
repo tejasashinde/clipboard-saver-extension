@@ -4,6 +4,10 @@ Clipboard Saver is a Chrome extension for saving copied text locally as you brow
 
 <p align="center"><img src="./UI.png" alt="Clipboard Saver UI"/><br/></p>
 
+## Why This Exists (Inspiration)
+
+I often needed to copy information from websites and manually paste it into CSV files, Word documents, or other apps. Handling many items across multiple sites quickly became tedious (Ctrl+C then Ctrl+V). Hence, I built Clipboard Saver to make saving copied text effortless.
+
 ## What It Does
 
 - Captures copied text from webpages and stores it in `chrome.storage.local`.
